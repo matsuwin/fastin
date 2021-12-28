@@ -12,7 +12,7 @@
 
 ```go
 // New bufregulator handle
-var bufRegulator = New(time.Second)
+var bufRegulator = bufregulator.New(time.Second)
 
 // 使用切片实现暂存容器
 var bucket = make([]string, 0)

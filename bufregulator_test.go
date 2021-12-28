@@ -9,12 +9,12 @@ import (
 // New bufregulator handle
 var bufRegulator = New(time.Second)
 
-// 业务数据暂存容器切片
+// 使用切片实现暂存容器
 var bucket = make([]string, 0)
 
 func Test(t *testing.T) {
 
-	// 创建自动刷新任务，动态调节 bucket size 的大小
+	// 创建自动刷新异步任务，动态调节 bucket size 的大小
 	go func() {
 		for {
 			bufRegulator.Refresh(len(bucket))
@@ -32,10 +32,10 @@ func Test(t *testing.T) {
 
 func write(data string) {
 
-	// 将数据放入暂存桶 (动态分桶)
+	// 将数据放入暂存桶
 	bucket = append(bucket, data)
 
-	// 索引 +1
+	// 索引+1
 	bufRegulator.Index++
 
 	// 当桶满后进行数据刷盘

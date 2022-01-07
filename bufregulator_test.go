@@ -2,6 +2,7 @@ package bufregulator
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 )
@@ -12,25 +13,22 @@ var bufRegulator = New(time.Second)
 // 使用切片实现暂存容器
 var bucket = make([]string, 0)
 
-func Test(t *testing.T) {
-
-	// 创建自动刷新异步任务，动态调节 bucket size 的大小
+// 创建自动刷新异步任务，动态调节 bucket size 的大小
+func init() {
 	go func() {
 		for {
 			bufRegulator.Refresh(len(bucket))
 		}
 	}()
-
-	// 模拟大量数据写入
-	for {
-		time.Sleep(time.Millisecond * 10)
-
-		// 写入一条数据
-		write("data")
-	}
 }
 
+var mutex = &sync.Mutex{}
+
 func write(data string) {
+
+	// 并行条件下记得加锁
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	// 将数据放入暂存桶
 	bucket = append(bucket, data)
@@ -52,4 +50,15 @@ func bucketRefresh(wc int) {
 	}()
 
 	// 批量写入磁盘或下游数据库
+}
+
+func Test(t *testing.T) {
+
+	// 模拟大量数据写入
+	for {
+		time.Sleep(time.Millisecond * 10)
+
+		// 写入一条数据
+		go write("data")
+	}
 }

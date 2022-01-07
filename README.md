@@ -21,18 +21,24 @@ var bucket = make([]string, 0)
 *2. 创建刷新器*
 
 ```go
-// 创建用于自动刷新的异步任务，动态调节 bucket size 的大小
-go func() {
-    for {
-        bufRegulator.Refresh(len(bucket))
-    }
-}()
+// 创建自动刷新异步任务，动态调节 bucket size 的大小
+func init() {
+    go func() {
+        for {
+            bufRegulator.Refresh(len(bucket))
+        }
+    }()
+}
 ```
 
 *3. 实现数据入桶和刷盘逻辑*
 
 ```go
 func write(data string) {
+
+    // 并行条件下记得加锁
+    mutex.Lock()
+    defer mutex.Unlock()
 
     // 将数据放入暂存桶
     bucket = append(bucket, data)
@@ -66,7 +72,7 @@ for {
     time.Sleep(time.Millisecond * 10)
 
     // 写入一条数据
-    write("data")
+    go write("data")
 }
 ```
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/utilgo/stringx"
 	"go.etcd.io/bbolt"
 	"math"
 	"os"
@@ -16,8 +17,10 @@ func Select(db *bbolt.DB, min, max int64, prefix string, limit int) ([]Element, 
 	if limit <= 0 {
 		limit = math.MaxInt64
 	}
-	seek := []byte(fmt.Sprintf("%d", min))
-	compare := []byte(fmt.Sprintf("%d", max))
+	minS := fmt.Sprintf("%d", min)
+	maxS := fmt.Sprintf("%d", max)
+	seek := stringx.StringToBytes(&minS)
+	compare := stringx.StringToBytes(&maxS)
 	data := make([]Element, 0, 100)
 	view := func(tx *bbolt.Tx) (_ error) {
 		cur := tx.Bucket(bucket).Cursor()
@@ -31,7 +34,7 @@ func Select(db *bbolt.DB, min, max int64, prefix string, limit int) ([]Element, 
 			if len(data) >= limit {
 				break
 			}
-			data = append(data, Element{string(k), v})
+			data = append(data, Element{stringx.BytesToString(k), v})
 		}
 		return
 	}
@@ -47,9 +50,9 @@ func SetAll(db *bbolt.DB, elements []Element) (_ error) {
 		b := tx.Bucket(bucket)
 		for i := range elements {
 			if elements[i].Value != nil {
-				err = b.Put([]byte(elements[i].Index), elements[i].Value)
+				err = b.Put(stringx.StringToBytes(&elements[i].Index), elements[i].Value)
 			} else {
-				err = b.Delete([]byte(elements[i].Index))
+				err = b.Delete(stringx.StringToBytes(&elements[i].Index))
 			}
 			if err != nil {
 				return
@@ -104,7 +107,7 @@ func ValuesByMap(data map[string][]byte) []Element {
 
 func Get(db *bbolt.DB, index string) (value []byte, _ error) {
 	view := func(tx *bbolt.Tx) error {
-		value = tx.Bucket(bucket).Get([]byte(index))
+		value = tx.Bucket(bucket).Get(stringx.StringToBytes(&index))
 		return nil
 	}
 	if err := db.View(view); err != nil {
@@ -118,7 +121,7 @@ func GetKeyAll(db *bbolt.DB) ([]string, error) {
 	view := func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucket)
 		return b.ForEach(func(k, v []byte) error {
-			keys = append(keys, string(k))
+			keys = append(keys, stringx.BytesToString(k))
 			return nil
 		})
 	}
@@ -132,7 +135,7 @@ func DeleteAll(db *bbolt.DB, keys []string) error {
 	update := func(tx *bbolt.Tx) error {
 		b := tx.Bucket(bucket)
 		for _, v := range keys {
-			err := b.Delete([]byte(v))
+			err := b.Delete(stringx.StringToBytes(&v))
 			if err != nil {
 				return err
 			}

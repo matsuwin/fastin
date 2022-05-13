@@ -1,4 +1,4 @@
-package bufregulator
+package fastin
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// New bufregulator handle
-var bufRegulator = New(time.Second)
+// New Handle
+var fastIn = New(time.Second)
 
 // 使用切片实现暂存容器
 var bucket = make([]string, 0)
@@ -17,7 +17,7 @@ var bucket = make([]string, 0)
 func init() {
 	go func() {
 		for {
-			bufRegulator.Refresh(len(bucket))
+			fastIn.Refresh()
 		}
 	}()
 }
@@ -34,11 +34,11 @@ func write(data string) {
 	bucket = append(bucket, data)
 
 	// 索引+1
-	bufRegulator.Index++
+	fastIn.Index++
 
 	// 当桶满后进行数据刷盘
 	wc := len(bucket)
-	if wc >= bufRegulator.Size {
+	if wc >= fastIn.Size {
 		bucketRefresh(wc)
 	}
 }

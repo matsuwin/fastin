@@ -1,4 +1,4 @@
-package bufregulator
+package fastin
 
 import "time"
 
@@ -7,8 +7,6 @@ import "time"
  *
  * 适用于大量数据的写入场景，实现分批次的落盘，减轻下游负载。
  */
-
-const minCap = 10 // 最小容量
 
 type structure struct {
 	Size  int // Size 当前缓冲区的容量
@@ -20,12 +18,10 @@ func New(rate time.Duration) *structure {
 	return &structure{rate: rate}
 }
 
-func (st *structure) Refresh(size int) {
-	if size < minCap {
-		st.Index = 1
-	} else {
-		st.Index = minCap
-	}
+func (st *structure) Refresh() {
+	defer func() {
+		st.Size = st.Index
+	}()
+	st.Index = 1
 	time.Sleep(st.rate)
-	st.Size = st.Index
 }

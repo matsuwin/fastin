@@ -1,8 +1,6 @@
-# bufregulator
+# fastin
 
 缓冲区容量调节器，适用于大量数据的写入场景，实现分批次的落盘，减轻下游负载。
-
-*该存储库默认内置了 BoltDB 的 API封装库 `bolt.New(fp)`。*
 
 <br>
 
@@ -11,8 +9,8 @@
 *1. 准备工作*
 
 ```go
-// New bufregulator handle
-var bufRegulator = bufregulator.New(time.Second)
+// New Handle
+var fastIn = New(time.Second)
 
 // 使用切片实现暂存容器
 var bucket = make([]string, 0)
@@ -25,7 +23,7 @@ var bucket = make([]string, 0)
 func init() {
     go func() {
         for {
-            bufRegulator.Refresh(len(bucket))
+            fastIn.Refresh(len(bucket))
         }
     }()
 }
@@ -44,11 +42,11 @@ func write(data string) {
     bucket = append(bucket, data)
 
     // 索引+1
-    bufRegulator.Index++
+    fastIn.Index++
 
     // 当桶满后进行数据刷盘
     wc := len(bucket)
-    if wc >= bufRegulator.Size {
+    if wc >= fastIn.Size {
         bucketRefresh(wc)
     }
 }
@@ -81,5 +79,5 @@ for {
 ## Installing
 
 ```
-go get github.com/matsuwin/bufregulator
+go get github.com/matsuwin/fastin
 ```

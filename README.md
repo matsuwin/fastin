@@ -75,11 +75,3 @@ for {
     go write("data")
 }
 ```
-
-<br>
-
-## Installing
-
-```
-go get github.com/matsuwin/fastin
-```
